@@ -1,0 +1,5 @@
+USER =  ''
+DOMAIN = ''
+PASSWORD =  ''
+CONSUMER_KEY=''
+CONSUMER_SECRET=''

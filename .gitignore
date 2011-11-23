@@ -1,0 +1,30 @@
+# CartoDB Credentials #
+#######################
+credentials.py
+
+# Compiled source #
+###################
+*.pyc
+*.bak
+
+# Logs and databases #
+######################
+*.log
+*.sql
+*.sqlite
+
+# IDE files #
+#############
+*.idea
+*.project
+*.pydevproject
+*.iml
+*.swp
+
+# OS files #
+############
+.DS_Store
+*.*~
+.#*
+*.svn
+.svn
