@@ -6,16 +6,16 @@ from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.ext.webapp import template
 from cartodb import cartodb
-from private.credentials import CONSUMER_KEY, CONSUMER_SECRET, USER, PASSWORD, DOMAIN
+from config.credentials import CONSUMER_KEY, CONSUMER_SECRET, USER, PASSWORD, DOMAIN
 
 CARTODB = cartodb.CartoDB(CONSUMER_KEY, CONSUMER_SECRET, USER, PASSWORD, DOMAIN)
-    
+
 class WritePoint(webapp.RequestHandler):
     def get(self):
         latitude = float(self.request.get('latitude'))
         longitude = float(self.request.get('longitude'))
         if abs(latitude) < 90 and abs(longitude) < 180: 
-            sql = "INSERT INTO write_points (latitude, longitude, the_geom, the_geom_webmercator) VALUES (%s, %s, GEOMETRYFROMTEXT('POINT(%s %s)',4326), ST_Transform(GEOMETRYFROMTEXT('POINT(%s %s)',4326), 3857));" % (latitude, longitude, longitude, latitude, longitude, latitude)
+            sql = "INSERT INTO write_points (latitude, longitude, the_geom) VALUES (%s, %s, GEOMETRYFROMTEXT('POINT(%s %s)',4326));" % (latitude, longitude, longitude, latitude)
             res = CARTODB.sql(sql)
             #self.response.out.write( 'success' )
             self.response.http_status_message(200)

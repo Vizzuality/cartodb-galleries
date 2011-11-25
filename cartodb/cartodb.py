@@ -24,6 +24,7 @@
 """
 
 import urlparse
+import cgi
 import oauth2 as oauth
 import urllib
 import httplib2
@@ -66,8 +67,7 @@ class CartoDB(object):
         # Get Access Token
         access_token_url = ACCESS_TOKEN_URL % {'user': cartodb_domain}
         resp, token = client.request(access_token_url, method="POST", body=urllib.urlencode(params))
-        access_token = dict(urlparse.parse_qsl(token))
-        
+        access_token = dict(cgi.parse_qsl(token))
         token = oauth.Token(access_token['oauth_token'], access_token['oauth_token_secret'])
 
         # prepare client
