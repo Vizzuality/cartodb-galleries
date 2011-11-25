@@ -1,5 +1,6 @@
 from __future__ import with_statement
 import os
+import logging
 from google.appengine.ext import db
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
@@ -14,8 +15,10 @@ class WritePoint(webapp.RequestHandler):
         latitude = float(self.request.get('latitude'))
         longitude = float(self.request.get('longitude'))
         if abs(latitude) < 90 and abs(longitude) < 180: 
-            CARTODB.sql("INSERT INTO write_points (latitude, longitude, the_geom, the_geom_webmercator) VALUES (%s, %s, GEOMETRYFROMTEXT('POINT(%s %s)',4326), ST_Transform(GEOMETRYFROMTEXT('POINT(%s %s)',4326), 3857));" % (latitude, longitude, longitude, latitude, longitude, latitude))
-            self.response.out.write( 'hi' )
+            sql = "INSERT INTO write_points (latitude, longitude, the_geom, the_geom_webmercator) VALUES (%s, %s, GEOMETRYFROMTEXT('POINT(%s %s)',4326), ST_Transform(GEOMETRYFROMTEXT('POINT(%s %s)',4326), 3857));" % (latitude, longitude, longitude, latitude, longitude, latitude)
+            res = CARTODB.sql(sql)
+            #self.response.out.write( 'success' )
+            self.response.http_status_message(200)
         else:
             self.error(500)
         
