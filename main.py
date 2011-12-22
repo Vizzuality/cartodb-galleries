@@ -5,12 +5,25 @@ from google.appengine.ext import db
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.ext.webapp import template
+from google.appengine.api import memcache
 from django.utils import simplejson as json
 from cartodb import cartodb
 from config.credentials import CONSUMER_KEY, CONSUMER_SECRET, USER, PASSWORD, DOMAIN
 
-CARTODB = cartodb.CartoDB(CONSUMER_KEY, CONSUMER_SECRET, USER, PASSWORD, DOMAIN)
-   
+class Auth(object):
+    def __init__(self):
+        self.CARDODB = cartodb.CartoDB(CONSUMER_KEY, CONSUMER_SECRET, USER, PASSWORD, DOMAIN)
+        memcache.set("cartodb-auth", 1, time=3600) #1 hour
+    def getCDB(self):
+        if memcache.get("cartodb-auth"):
+            pass
+        else:
+            self.CARTODB = cartodb.CartoDB(CONSUMER_KEY, CONSUMER_SECRET, USER, PASSWORD, DOMAIN)
+            memcache.set("cartodb-auth", 1, time=3600) #1 hour
+        return self.CARDODB
+
+AUTH = Auth()
+    
 class BaseHandler(webapp.RequestHandler):  
   
   def xhr_response(self):
@@ -49,11 +62,12 @@ class BaseHandler(webapp.RequestHandler):
 
 class WritePoint(webapp.RequestHandler):
     def get(self):
+        UpdateAuth()
         latitude = float(self.request.get('latitude'))
         longitude = float(self.request.get('longitude'))
         if abs(latitude) < 90 and abs(longitude) < 180: 
             sql = "INSERT INTO write_points (latitude, longitude, the_geom) VALUES (%s, %s, GEOMETRYFROMTEXT('POINT(%s %s)',4326));" % (latitude, longitude, longitude, latitude)
-            res = CARTODB.sql(sql)
+            res = AUTH.getCDB().sql(sql)
             #self.response.out.write( 'success' )
             self.response.http_status_message(200)
         else:
@@ -77,14 +91,20 @@ class WritePolygon(BaseHandler):
             else:
                 sql = "UPDATE write_polygons SET the_geom = GEOMETRYFROMTEXT('MULTIPOLYGON(((%s)))',4326) WHERE cartodb_id = %s" % (','.join(poly),cartodb_id)
             
-            CARTODB.sql(sql)
+            AUTH.getCDB().sql(sql)
             self.response.http_status_message(200)
         except:
             self.error(500)
+            
+class RasterTests(BaseHandler):
+  def get(self, page):
+    path = os.path.join(os.path.dirname(__file__), 'rast/', page)
+    self.response.out.write(template.render(path, {}))
         
 application = webapp.WSGIApplication(
                                      [('/cartodb/write/point', WritePoint),
-                                      ('/cartodb/write/polygon', WritePolygon)],
+                                      ('/cartodb/write/polygon', WritePolygon),
+                                      ('/rast/([^/]+)?', RasterTests)],
                                      debug=True)
 
 def main():
